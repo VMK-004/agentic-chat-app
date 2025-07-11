@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -45,6 +46,8 @@ class _ChatPageState extends State<ChatPage> {
   final List<Map<String, dynamic>> _messages = [];
   late String _myId;
   late String _myUsername;
+  List<String> _suggestions = [];
+  String? _summary;
   List<String> sampleNames = ['Alex', 'Viki', 'Sam', 'Taylor', 'Jordan', 'Casey'];
   
   void _sendMessage() {
@@ -149,23 +152,169 @@ class _ChatPageState extends State<ChatPage> {
 
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(hintText: 'Enter your message'),
+                if (_summary != null)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 6),
+                    child: Card(
+                      color: Colors.amber[100],
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Text(
+                                _summary!,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                _summary = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: _sendMessage,
+
+
+
+                if (_suggestions.isNotEmpty)
+                  Wrap(
+                    spacing: 6,
+                    children: _suggestions.map((s) {
+                      return ActionChip(
+                        label: Text(s),
+                        onPressed: () {
+                          setState(() {
+                            _controller.text = s;
+                            _suggestions = [];
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(hintText: 'Enter your message'),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.bolt), // ⚡️ Ask AI button
+                      onPressed: () async {
+                        final lastReceived = _messages.lastWhere(
+                          (m) => m['sender'] != _myId,
+                          orElse: () => {},
+                        );
+                        if (lastReceived.isNotEmpty) {
+                          final prompt = lastReceived['message'] ?? '';
+                          try {
+                            final replies = await getReplySuggestions(prompt);
+                            setState(() {
+                              _suggestions = replies;
+                            });
+                          } catch (e) {
+                            print("AI error: $e");
+                          }
+                        }
+                      },
+                    ),
+
+                    IconButton(
+                      icon: Icon(Icons.summarize), // 📋
+                      onPressed: () async {
+                        await summarizeChat();
+                      },
+                    ),
+
+                    IconButton(
+                      icon: Icon(Icons.send),
+                      onPressed: _sendMessage,
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+
         ],
       ),
     );
+  }
+
+  Future<List<String>> getReplySuggestions(String prompt) async {
+    final url = Uri.parse('http://10.0.2.2:8001/chat'); // Android emulator = 10.0.2.2
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'prompt': 'Suggest 3 replies to: "$prompt"'}),
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final rawText = decoded['response']?.toString() ?? '';
+
+      // Safely split only if it's a proper string
+      return rawText
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
+    } else {
+      throw Exception('Failed to get suggestions');
+    }
+  }
+
+  Future<void> summarizeChat() async {
+    if (_messages.isEmpty) return;
+
+    // Get last 10 messages, or fewer if not available
+    final last10 = _messages.takeLast(10).toList();
+
+    // Format as a string
+    final conversation = last10.map((m) =>
+      "${m['username'] ?? 'User'}: ${m['message']}"
+    ).join("\n");
+
+    final url = Uri.parse('http://10.0.2.2:8001/chat');
+
+    try {
+      final response = await http.post(    
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'prompt': 'Summarize this conversation in 1-2 lines:\n$conversation'
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        setState(() {
+          _summary = decoded['response'] ?? 'No summary available.';
+        });
+      } else {
+        print("Failed to get summary: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Summary error: $e");
+    }
+  }
+
+}
+
+extension LastMessages<T> on List<T> {
+  Iterable<T> takeLast(int n) {
+    final len = this.length;
+    return this.skip(len - (n < len ? n : len));
   }
 }
