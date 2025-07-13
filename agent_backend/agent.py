@@ -1,12 +1,12 @@
 import httpx
 
 class Agent:
-    def __init__(self, model="mistral", base_url="http://localhost:11434/api/generate"):
+    def __init__(self, model="qwen3:0.6b", base_url="http://localhost:11434/api/generate"):
         self.model = model
         self.base_url = base_url
 
     async def get_response(self, prompt: str) -> str:
-        async with httpx.AsyncClient(timeout=80.0) as client:  # Increased timeout from 70 to 80
+        async with httpx.AsyncClient(timeout=180.0) as client:  # Increased timeout from 70 to 180
             try:
                 response = await client.post(self.base_url, json={
                     "model": self.model,
