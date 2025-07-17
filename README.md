@@ -62,7 +62,7 @@ Before running the project, make sure you have the following installed:
 
 ### 🔧 Backend Setup (Django + FastAPI)
 
-````bash
+```bash
 # Clone the repo
 git clone https://github.com/VMK-004/agentic-chat-app.git
 cd agentic-chat-app
@@ -86,6 +86,7 @@ python manage.py runserver
 cd ../agent_backend
 uvicorn main:app --reload --port 8001
 
+```
 
 ---
 
@@ -115,8 +116,8 @@ Chat_Application/
 │   └── main.py           # Handles summarization, AI chat
 ├── uploaded_files/       # Cached user uploads
 └── README.md
-````
+```
 
 ## 👨‍💻 Author
 
-- **Mohan Krishna** – [LinkedIn](https://www.linkedin.com/in/vmkrishna2004/)<!-- | [Portfolio](https://yourportfolio.com) -->
+- **Mohan Krishna** – [LinkedIn](https://www.linkedin.com/in/vmkrishna2004/) <!-- | [Portfolio](https://yourportfolio.com) -->
