@@ -1,6 +1,6 @@
 # 🧠 Agentic Chat App
 
-A real-time chat application built using **Flutter** and **Django Channels**, enhanced with an **Agentic AI Assistant** powered by **Ollama + RAG (Retrieval-Augmented Generation)**. This app supports **file sharing**, **AI-based summaries**, and **reply suggestions**, with a sleek UI.
+A real-time chat application built using **Flutter** and **Django Channels**, enhanced with an **Agentic AI Assistant** powered by **Ollama + RAG (Retrieval-Augmented Generation)**. This app supports **file sharing**, **AI-based summaries**, and **reply suggestions**, with a minimum UI.
 
 ---
 
@@ -46,11 +46,54 @@ A real-time chat application built using **Flutter** and **Django Channels**, en
 
 ---
 
+## 🚀 Getting Started
+
+### 📦 Prerequisites
+
+Before running the project, make sure you have the following installed:
+
+- **Flutter SDK** (for mobile app) → [Install Flutter](https://docs.flutter.dev/get-started/install)
+- **Python 3.8+** with `pip`
+- **Ollama** with Mistral model installed → [Install Ollama](https://ollama.com/)
+- **Docker** (to run Redis server) → [Install Docker](https://docs.docker.com/get-docker/)
+- **Redis** (via Docker container)
+
+---
+
+### 🔧 Backend Setup (Django + FastAPI)
+
+````bash
+# Clone the repo
+git clone https://github.com/VMK-004/agentic-chat-app.git
+cd agentic-chat-app
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate        # macOS/Linux
+venv\Scripts\activate           # Windows
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run Redis using Docker
+docker run -p 6379:6379 redis
+
+# Start the Django backend server
+cd chatproject
+python manage.py runserver
+
+# In a separate terminal, start the FastAPI AI server
+cd ../agent_backend
+uvicorn main:app --reload --port 8001
+
+
+---
+
 ## 🧠 How the AI Works
 
 ### 📍 Local Ollama LLM
 
-Runs a lightweight Mistral model locally for chat, summaries, and suggestions.
+Runs a lightweight qwen3:0.6b model locally for chat, summaries, and suggestions.
 
 ### 🧠 RAG Pipeline
 
@@ -72,4 +115,8 @@ Chat_Application/
 │   └── main.py           # Handles summarization, AI chat
 ├── uploaded_files/       # Cached user uploads
 └── README.md
-```
+````
+
+## 👨‍💻 Author
+
+- **Mohan Krishna** – [LinkedIn](https://www.linkedin.com/in/vmkrishna2004/)<!-- | [Portfolio](https://yourportfolio.com) -->
